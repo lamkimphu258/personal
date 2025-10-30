@@ -20,6 +20,25 @@
             ['label' => 'Calories', 'key' => 'calories'],
         ];
 
+        $templatePopupFields = [
+            ['label' => 'Calories', 'key' => 'calories'],
+            ['label' => 'Protein (g)', 'key' => 'protein_g'],
+            ['label' => 'Carbohydrates (g)', 'key' => 'carbs_g'],
+            ['label' => 'Fat (g)', 'key' => 'fat_g'],
+        ];
+
+        $templateOptions = collect($templates)
+            ->map(fn ($template) => [
+                'id' => $template->id,
+                'name' => $template->name,
+                'description' => $template->description,
+                'calories' => $template->calories,
+                'protein_g' => $template->protein_g,
+                'carbs_g' => $template->carbs_g,
+                'fat_g' => $template->fat_g,
+            ])
+            ->values();
+
         $emptyMessage = "No entries yet for {$date}.";
 
         $submitLabel = 'Add';
@@ -28,6 +47,7 @@
         $carbsValue = old('carbs_g');
         $fatValue = old('fat_g');
         $calorieValue = old('calories');
+        $selectedTemplateOld = old('food_template_id');
 
         $editConfig = [
             'action' => route('tracking.food.store'),
@@ -38,6 +58,7 @@
             'fields' => [
                 ['name' => 'entry_id', 'type' => 'hidden', 'value_key' => 'id'],
                 ['name' => 'date', 'type' => 'hidden', 'value' => $date],
+                ['name' => 'food_template_id', 'type' => 'hidden', 'value_key' => 'food_template_id'],
                 ['name' => 'name', 'label' => 'Name', 'type' => 'text', 'value_key' => 'name'],
                 ['name' => 'protein_g', 'label' => 'Protein (g)', 'type' => 'number', 'value_key' => 'protein_g', 'attributes' => ['inputmode' => 'numeric', 'min' => 0, 'step' => 1]],
                 ['name' => 'carbs_g', 'label' => 'Carbs (g)', 'type' => 'number', 'value_key' => 'carbs_g', 'attributes' => ['inputmode' => 'numeric', 'min' => 0, 'step' => 1]],
@@ -174,41 +195,123 @@
                 <p class="mt-1 text-sm text-slate-400">Log each meal or snack with its macros to keep the totals accurate.</p>
             </div>
 
-            <form action="{{ route('tracking.food.store') }}" method="post" class="grid gap-3 sm:grid-cols-6">
+            <form
+                action="{{ route('tracking.food.store') }}"
+                method="post"
+                class="grid gap-3 sm:grid-cols-6"
+                x-data="(() => {
+                    return {
+                        templates: @js($templateOptions),
+                        selectedTemplateId: @js($selectedTemplateOld),
+                        findTemplate(id) {
+                            return this.templates.find((template) => String(template.id) === String(id));
+                        },
+                        applyTemplate(id) {
+                            const template = this.findTemplate(id);
+
+                            if (! template) {
+                                return;
+                            }
+
+                            if (this.$refs.nameField) {
+                                this.$refs.nameField.value = template.name;
+                            }
+
+                            if (this.$refs.proteinField) {
+                                this.$refs.proteinField.value = template.protein_g;
+                            }
+
+                            if (this.$refs.carbsField) {
+                                this.$refs.carbsField.value = template.carbs_g;
+                            }
+
+                            if (this.$refs.fatField) {
+                                this.$refs.fatField.value = template.fat_g;
+                            }
+
+                            if (this.$refs.caloriesField) {
+                                this.$refs.caloriesField.value = template.calories;
+                            }
+                        },
+                        handleTemplateChange(value) {
+                            const normalized = value || null;
+                            this.selectedTemplateId = normalized;
+
+                            if (normalized) {
+                                this.applyTemplate(normalized);
+                            }
+                        },
+                        clearTemplate() {
+                            this.selectedTemplateId = null;
+                            if (this.$refs.templateSelect) {
+                                this.$refs.templateSelect.value = '';
+                            }
+                        },
+                    };
+                })()"
+                x-init="if (selectedTemplateId) { applyTemplate(selectedTemplateId); }"
+            >
                 @csrf
                 <input type="hidden" name="date" value="{{ $date }}" />
 
                 <div class="sm:col-span-2 space-y-1">
+                    <label for="food_template_id" class="text-sm text-slate-300">Template</label>
+                    <div class="flex items-center gap-2">
+                        <select
+                            id="food_template_id"
+                            name="food_template_id"
+                            x-ref="templateSelect"
+                            x-model="selectedTemplateId"
+                            x-on:change="handleTemplateChange($event.target.value)"
+                            class="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-emerald-400 focus:outline-none focus:ring-0"
+                        >
+                            <option value="">Select a template</option>
+                            @foreach ($templates as $template)
+                                <option value="{{ $template->id }}" @selected($selectedTemplateOld == $template->id)>{{ $template->name }}</option>
+                            @endforeach
+                        </select>
+                        <button
+                            type="button"
+                            class="rounded-md border border-slate-700 bg-transparent px-3 py-2 text-xs text-slate-300 hover:border-slate-600"
+                            x-on:click="clearTemplate()"
+                        >Clear</button>
+                    </div>
+                    @error('food_template_id')
+                        <p class="text-sm text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div class="sm:col-span-2 space-y-1">
                     <label for="name" class="text-sm text-slate-300">Name</label>
-                    <input id="name" name="name" type="text" value="{{ $nameValue }}" required class="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-emerald-400 focus:outline-none focus:ring-0" />
+                    <input id="name" name="name" type="text" value="{{ $nameValue }}" required class="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-emerald-400 focus:outline-none focus:ring-0" x-ref="nameField" />
                     @error('name')
                         <p class="text-sm text-red-400">{{ $message }}</p>
                     @enderror
                 </div>
                 <div class="space-y-1">
                     <label for="protein_g" class="text-sm text-slate-300">Protein (g)</label>
-                    <input id="protein_g" name="protein_g" type="number" inputmode="numeric" min="1" value="{{ $proteinValue }}" required class="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-emerald-400 focus:outline-none focus:ring-0" />
+                    <input id="protein_g" name="protein_g" type="number" inputmode="numeric" min="1" value="{{ $proteinValue }}" required class="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-emerald-400 focus:outline-none focus:ring-0" x-ref="proteinField" />
                     @error('protein_g')
                         <p class="text-sm text-red-400">{{ $message }}</p>
                     @enderror
                 </div>
                 <div class="space-y-1">
                     <label for="carbs_g" class="text-sm text-slate-300">Carbs (g)</label>
-                    <input id="carbs_g" name="carbs_g" type="number" inputmode="numeric" min="1" value="{{ $carbsValue }}" required class="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-emerald-400 focus:outline-none focus:ring-0" />
+                    <input id="carbs_g" name="carbs_g" type="number" inputmode="numeric" min="1" value="{{ $carbsValue }}" required class="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-emerald-400 focus:outline-none focus:ring-0" x-ref="carbsField" />
                     @error('carbs_g')
                         <p class="text-sm text-red-400">{{ $message }}</p>
                     @enderror
                 </div>
                 <div class="space-y-1">
                     <label for="fat_g" class="text-sm text-slate-300">Fat (g)</label>
-                    <input id="fat_g" name="fat_g" type="number" inputmode="numeric" min="1" value="{{ $fatValue }}" required class="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-emerald-400 focus:outline-none focus:ring-0" />
+                    <input id="fat_g" name="fat_g" type="number" inputmode="numeric" min="1" value="{{ $fatValue }}" required class="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-emerald-400 focus:outline-none focus:ring-0" x-ref="fatField" />
                     @error('fat_g')
                         <p class="text-sm text-red-400">{{ $message }}</p>
                     @enderror
                 </div>
                 <div class="space-y-1">
                     <label for="calories" class="text-sm text-slate-300">Calories</label>
-                    <input id="calories" name="calories" type="number" inputmode="numeric" min="1" value="{{ $calorieValue }}" required class="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-emerald-400 focus:outline-none focus:ring-0" />
+                    <input id="calories" name="calories" type="number" inputmode="numeric" min="1" value="{{ $calorieValue }}" required class="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-emerald-400 focus:outline-none focus:ring-0" x-ref="caloriesField" />
                     @error('calories')
                         <p class="text-sm text-red-400">{{ $message }}</p>
                     @enderror
@@ -230,6 +333,8 @@
             search-placeholder="Search foods"
             :popup-fields="$popupFields"
             :columns="$macroColumns"
+            template-relation-key="foodTemplate"
+            :template-popup-fields="$templatePopupFields"
             :empty-message="$emptyMessage"
             :edit-config="$editConfig"
             delete-route="tracking.food.destroy"

@@ -6,6 +6,7 @@ use App\Http\Requests\FoodEntryRequest;
 use App\Http\Requests\WeightEntryRequest;
 use App\Models\DailyWeight;
 use App\Models\FoodEntry;
+use App\Models\FoodTemplate;
 use App\Models\NutritionProfile;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -28,7 +29,11 @@ class TrackingController extends Controller
         $nextDate = Carbon::createFromFormat('Y-m-d', $date)->addDay()->toDateString();
 
         $weight = DailyWeight::query()->forDate($date)->first();
-        $entries = FoodEntry::query()->forDate($date)->orderBy('created_at')->get();
+        $entries = FoodEntry::query()
+            ->with('foodTemplate')
+            ->forDate($date)
+            ->orderBy('created_at')
+            ->get();
 
         $totals = [
             'protein_g' => (int) $entries->sum('protein_g'),
@@ -64,6 +69,7 @@ class TrackingController extends Controller
             'totals' => $totals,
             'targets' => $targets,
             'remaining' => $remaining,
+            'templates' => FoodTemplate::query()->orderBy('name')->get(),
         ]);
     }
 
@@ -93,6 +99,7 @@ class TrackingController extends Controller
             'fat_g' => (int) $data['fat_g'],
             'calories' => (int) $data['calories'],
         ];
+        $payload['food_template_id'] = $data['food_template_id'] ?? null;
 
         if ($entryId) {
             $entry = FoodEntry::query()->findOrFail($entryId);

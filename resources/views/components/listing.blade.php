@@ -23,6 +23,8 @@
 
     // Optional table columns configuration, e.g. [['label' => 'Calories', 'key' => 'calories', 'align' => 'right']]
     'columns' => [],
+    'templateRelationKey' => null,
+    'templatePopupFields' => [],
     'emptyMessage' => 'No items found.',
 ])
 
@@ -35,6 +37,16 @@
     $currentQuery = request()->query($searchParam, '');
     $columns = collect($columns);
     $hasColumns = $columns->isNotEmpty();
+    $templateRelationPath = $templateRelationKey;
+    $templatePopupFieldDefinitions = collect(is_array($templatePopupFields) ? $templatePopupFields : [])
+        ->map(function (array $field): array {
+            return [
+                'label' => $field['label'] ?? ucfirst((string) ($field['key'] ?? '')),
+                'key' => $field['key'] ?? null,
+            ];
+        })
+        ->filter(fn (array $field): bool => filled($field['key']))
+        ->values();
 
     $editConfiguration = collect($editConfig ?? []);
     $editFields = $editConfiguration->get('fields', []);
@@ -135,6 +147,39 @@
                                     'value' => data_get($item, $field['key'] ?? ''),
                                 ];
                             }
+                            $templatePopup = null;
+                            $templateLink = null;
+
+                            if ($templateRelationPath) {
+                                $rawTemplate = data_get($item, $templateRelationPath);
+
+                                if (! $rawTemplate && is_array($item)) {
+                                    $rawTemplate = data_get($item, \Illuminate\Support\Str::snake($templateRelationPath));
+                                }
+
+                                $templateArray = $rawTemplate instanceof \Illuminate\Database\Eloquent\Model
+                                    ? $rawTemplate->toArray()
+                                    : (is_array($rawTemplate) ? $rawTemplate : null);
+
+                                if ($templateArray && filled($templateArray['name'] ?? null)) {
+                                    $templatePopup = [
+                                        'title' => (string) ($templateArray['name'] ?? ''),
+                                        'description' => (string) ($templateArray['description'] ?? ''),
+                                        'fields' => $templatePopupFieldDefinitions
+                                            ->map(function (array $field) use ($templateArray): array {
+                                                return [
+                                                    'label' => $field['label'],
+                                                    'value' => data_get($templateArray, $field['key']),
+                                                ];
+                                            })
+                                            ->all(),
+                                    ];
+
+                                    if (! empty($templateArray['id'])) {
+                                        $templateLink = route('food-templates.show', $templateArray['id']);
+                                    }
+                                }
+                            }
                         @endphp
                         <tr
                             x-data="{ name: @js(Str::of($title)->lower()), visible: true }"
@@ -151,6 +196,18 @@
                                     @endphp
                                     <div class="mt-1 text-xs text-slate-400">
                                         {{ $dateValue instanceof \Carbon\Carbon ? $dateValue->toDateTimeString() : (string) $dateValue }}
+                                    </div>
+                                @endif
+                                @if ($templatePopup)
+                                    <div class="mt-2 text-xs">
+                                        <a
+                                            href="{{ $templateLink ?? '#' }}"
+                                            class="text-emerald-300 hover:underline"
+                                            x-on:click="if (! ($event.metaKey || $event.ctrlKey || $event.shiftKey || $event.button !== 0)) { $event.preventDefault(); openTemplate($el); }"
+                                            data-template='@json($templatePopup)'
+                                        >
+                                            Template: {{ $templatePopup['title'] }}
+                                        </a>
                                     </div>
                                 @endif
                             </td>
@@ -212,6 +269,40 @@
                             'value' => data_get($item, $field['key'] ?? ''),
                         ];
                     }
+
+                    $templatePopup = null;
+                    $templateLink = null;
+
+                    if ($templateRelationPath) {
+                        $rawTemplate = data_get($item, $templateRelationPath);
+
+                        if (! $rawTemplate && is_array($item)) {
+                            $rawTemplate = data_get($item, \Illuminate\Support\Str::snake($templateRelationPath));
+                        }
+
+                        $templateArray = $rawTemplate instanceof \Illuminate\Database\Eloquent\Model
+                            ? $rawTemplate->toArray()
+                            : (is_array($rawTemplate) ? $rawTemplate : null);
+
+                        if ($templateArray && filled($templateArray['name'] ?? null)) {
+                            $templatePopup = [
+                                'title' => (string) ($templateArray['name'] ?? ''),
+                                'description' => (string) ($templateArray['description'] ?? ''),
+                                'fields' => $templatePopupFieldDefinitions
+                                    ->map(function (array $field) use ($templateArray): array {
+                                        return [
+                                            'label' => $field['label'],
+                                            'value' => data_get($templateArray, $field['key']),
+                                        ];
+                                    })
+                                    ->all(),
+                            ];
+
+                            if (! empty($templateArray['id'])) {
+                                $templateLink = route('food-templates.show', $templateArray['id']);
+                            }
+                        }
+                    }
                 @endphp
                 <div class="flex items-center justify-between py-3"
                  x-data="{ name: @js(Str::of($title)->lower()), visible: true }"
@@ -219,7 +310,11 @@
                  x-on:listing-filter.window="visible = $event.detail === '' || name.includes($event.detail)">
                 <div>
                     @if ($showRoute)
-                        <a href="{{ route($showRoute, $item) }}" class="text-emerald-300 hover:underline" x-on:click.prevent="openPopup($el)">
+                        <a
+                            href="{{ route($showRoute, $item) }}"
+                            class="text-emerald-300 hover:underline"
+                            x-on:click="if (! ($event.metaKey || $event.ctrlKey || $event.shiftKey || $event.button !== 0)) { $event.preventDefault(); openPopup($el); }"
+                        >
                             <span class="listing-title" data-popup='@json($popupData)'>{{ $title }}</span>
                         </a>
                     @else
@@ -235,6 +330,18 @@
                                 ? optional(data_get($item, $dateKey))->toDateTimeString()
                                 : (string) data_get($item, $dateKey)
                             }}
+                        </div>
+                    @endif
+                    @if ($templatePopup)
+                        <div class="mt-2 text-xs">
+                            <a
+                                href="{{ $templateLink ?? '#' }}"
+                                class="text-emerald-300 hover:underline"
+                                x-on:click="if (! ($event.metaKey || $event.ctrlKey || $event.shiftKey || $event.button !== 0)) { $event.preventDefault(); openTemplate($el); }"
+                                data-template='@json($templatePopup)'
+                            >
+                                Template: {{ $templatePopup['title'] }}
+                            </a>
                         </div>
                     @endif
                 </div>
@@ -394,6 +501,30 @@
                     this.showModal();
                 } catch (error) {
                     // Ignore malformed popup payloads
+                }
+            },
+            openTemplate(el) {
+                if (! el) {
+                    return;
+                }
+
+                const payload = el.getAttribute('data-template') || '';
+
+                if (! payload) {
+                    return;
+                }
+
+                try {
+                    const data = JSON.parse(payload);
+                    this.modalMode = 'detail';
+                    this.detail = {
+                        title: data.title || '',
+                        description: data.description || '',
+                        fields: Array.isArray(data.fields) ? data.fields : [],
+                    };
+                    this.showModal();
+                } catch (error) {
+                    // Ignore malformed template payloads
                 }
             },
             openEdit(itemPayload) {

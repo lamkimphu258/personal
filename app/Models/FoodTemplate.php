@@ -2,26 +2,25 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class FoodEntry extends Model
+class FoodTemplate extends Model
 {
+    /** @use HasFactory<\Database\Factories\FoodTemplateFactory> */
     use HasFactory;
 
     /**
      * @var list<string>
      */
     protected $fillable = [
-        'date',
         'name',
-        'food_template_id',
+        'description',
+        'calories',
         'protein_g',
         'carbs_g',
         'fat_g',
-        'calories',
     ];
 
     /**
@@ -30,22 +29,15 @@ class FoodEntry extends Model
     protected function casts(): array
     {
         return [
-            'date' => 'date',
+            'calories' => 'integer',
             'protein_g' => 'integer',
             'carbs_g' => 'integer',
             'fat_g' => 'integer',
-            'calories' => 'integer',
-            'food_template_id' => 'integer',
         ];
     }
 
-    public function scopeForDate(Builder $query, string $date): Builder
+    public function foodEntries(): HasMany
     {
-        return $query->whereDate('date', $date);
-    }
-
-    public function foodTemplate(): BelongsTo
-    {
-        return $this->belongsTo(FoodTemplate::class);
+        return $this->hasMany(FoodEntry::class);
     }
 }

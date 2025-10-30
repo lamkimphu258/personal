@@ -25,6 +25,7 @@ class FoodEntryRequest extends FormRequest
             'carbs_g' => ['required', 'integer', 'min:1', 'max:2000'],
             'fat_g' => ['required', 'integer', 'min:1', 'max:2000'],
             'calories' => ['required', 'integer', 'min:1', 'max:5000'],
+            'food_template_id' => ['nullable', 'integer', Rule::exists('food_templates', 'id')],
         ];
     }
 
