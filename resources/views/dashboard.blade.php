@@ -195,6 +195,14 @@
                 empty-message="No calorie data for this range."
             />
 
+            <x-chart.line
+                chart-id="todo-completions"
+                :chart-key="'todo-completions'"
+                title="Completed Tasks"
+                description="See how many todo occurrences you finished each day within the selected range."
+                empty-message="No completed todos in this range yet. Visit the Todo page to start finishing tasks."
+            />
+
             <x-chart.bar
                 chart-id="top-foods"
                 :chart-key="'top-foods'"

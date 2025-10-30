@@ -25,6 +25,7 @@
                 ['label' => 'Home', 'href' => route('dashboard'), 'active' => request()->routeIs('dashboard')],
                 ['label' => 'Profile', 'href' => route('profile.edit'), 'active' => request()->routeIs('profile.*')],
                 ['label' => 'Food Templates', 'href' => route('food-templates.index'), 'active' => request()->routeIs('food-templates.*')],
+                ['label' => 'Todos', 'href' => route('todos.index'), 'active' => request()->routeIs('todos.*')],
             ];
         @endphp
 

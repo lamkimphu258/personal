@@ -5,6 +5,8 @@ namespace Database\Seeders;
 use App\Models\DailyWeight;
 use App\Models\FoodEntry;
 use App\Models\NutritionProfile;
+use App\Models\Task;
+use App\Models\TaskOccurrence;
 use Carbon\Carbon;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -23,6 +25,8 @@ class DatabaseSeeder extends Seeder
         DailyWeight::query()->delete();
         FoodEntry::query()->delete();
         NutritionProfile::query()->delete();
+        TaskOccurrence::query()->delete();
+        Task::withTrashed()->forceDelete();
 
         NutritionProfile::query()->create([
             'age' => 34,
@@ -125,6 +129,79 @@ class DatabaseSeeder extends Seeder
                     'carbs_g' => $nutrients['carbs_g'],
                     'fat_g' => $nutrients['fat_g'],
                     'calories' => $nutrients['calories'],
+                ]);
+            }
+        }
+
+        $dailyTask = Task::query()->create([
+            'title' => 'Morning Walk',
+            'priority' => Task::PRIORITY_MEDIUM,
+            'due_date' => $today->copy()->subDays(14)->toDateString(),
+            'repeat_mode' => Task::REPEAT_DAILY,
+        ]);
+
+        $deepWorkTask = Task::query()->create([
+            'title' => 'Deep Work Session',
+            'priority' => Task::PRIORITY_HIGH,
+            'due_date' => $today->copy()->subDays(14)->toDateString(),
+            'repeat_mode' => Task::REPEAT_SELECTED,
+            'repeat_days' => [1, 2, 3, 4, 5],
+        ]);
+
+        $weekendResetTask = Task::query()->create([
+            'title' => 'Weekend Reset',
+            'priority' => Task::PRIORITY_LOW,
+            'due_date' => $today->copy()->subDays(14)->toDateString(),
+            'repeat_mode' => Task::REPEAT_SELECTED,
+            'repeat_days' => [0, 6],
+        ]);
+
+        $todoSchedule = [
+            $today->copy()->subDays(6)->toDateString() => [
+                ['task' => $dailyTask, 'completed' => true],
+                ['task' => $deepWorkTask, 'completed' => true],
+            ],
+            $today->copy()->subDays(5)->toDateString() => [
+                ['task' => $dailyTask, 'completed' => true],
+                ['task' => $deepWorkTask, 'completed' => false],
+            ],
+            $today->copy()->subDays(4)->toDateString() => [
+                ['task' => $dailyTask, 'completed' => false],
+                ['task' => $deepWorkTask, 'completed' => true],
+            ],
+            $today->copy()->subDays(3)->toDateString() => [
+                ['task' => $dailyTask, 'completed' => true],
+                ['task' => $deepWorkTask, 'completed' => true],
+            ],
+            $today->copy()->subDays(2)->toDateString() => [
+                ['task' => $dailyTask, 'completed' => true],
+                ['task' => $deepWorkTask, 'completed' => true],
+                ['task' => $weekendResetTask, 'completed' => true],
+            ],
+            $today->copy()->subDays(1)->toDateString() => [
+                ['task' => $dailyTask, 'completed' => true],
+                ['task' => $deepWorkTask, 'completed' => true],
+            ],
+            $today->toDateString() => [
+                ['task' => $dailyTask, 'completed' => false],
+                ['task' => $deepWorkTask, 'completed' => false],
+                ['task' => $weekendResetTask, 'completed' => false],
+            ],
+        ];
+
+        foreach ($todoSchedule as $date => $entries) {
+            $dateCarbon = Carbon::createFromFormat('Y-m-d', $date);
+
+            foreach ($entries as $entry) {
+                /** @var \App\Models\Task $task */
+                $task = $entry['task'];
+                $isCompleted = (bool) $entry['completed'];
+
+                TaskOccurrence::query()->create([
+                    'task_id' => $task->id,
+                    'occurrence_date' => $dateCarbon->toDateString(),
+                    'is_completed' => $isCompleted,
+                    'completed_at' => $isCompleted ? $dateCarbon->copy()->setHour(18) : null,
                 ]);
             }
         }

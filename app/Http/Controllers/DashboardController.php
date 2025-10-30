@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\DailyWeight;
 use App\Models\FoodEntry;
 use App\Models\NutritionProfile;
+use App\Models\TaskOccurrence;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -103,6 +104,7 @@ class DashboardController extends Controller
         return [
             'weight-trend' => $this->weightSeries($start, $end),
             'calorie-adherence' => $this->calorieAdherenceSeries($start, $end),
+            'todo-completions' => $this->completedTodosSeries($start, $end),
             'top-foods' => $this->topFoodsSeries($start, $end),
         ];
     }
@@ -199,6 +201,42 @@ class DashboardController extends Controller
             'valueSuffix' => '×',
             'valueDecimals' => 0,
             'labelsAreDates' => false,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function completedTodosSeries(string $start, string $end): array
+    {
+        $rows = TaskOccurrence::query()
+            ->select('occurrence_date', DB::raw('COUNT(*) as total_completed'))
+            ->where('is_completed', true)
+            ->whereBetween('occurrence_date', [$start, $end])
+            ->groupBy('occurrence_date')
+            ->orderBy('occurrence_date')
+            ->get();
+
+        $points = $rows->map(static function ($row) {
+            $dateValue = $row->occurrence_date;
+
+            if ($dateValue instanceof Carbon) {
+                $dateString = $dateValue->toDateString();
+            } else {
+                $dateString = Carbon::parse((string) $dateValue)->toDateString();
+            }
+
+            return [
+                'label' => $dateString,
+                'value' => (int) $row->total_completed,
+            ];
+        })->values()->all();
+
+        return [
+            'points' => $points,
+            'valueSuffix' => ' tasks',
+            'valueDecimals' => 0,
+            'labelsAreDates' => true,
         ];
     }
 

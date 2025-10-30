@@ -69,6 +69,23 @@
                 'value_key' => $field['value_key'] ?? null,
                 'value' => $field['value'] ?? null,
                 'attributes' => $field['attributes'] ?? [],
+                'options' => collect(is_array($field['options'] ?? null) ? $field['options'] : [])
+                    ->map(function ($option): array {
+                        if (is_array($option)) {
+                            return [
+                                'value' => $option['value'] ?? null,
+                                'label' => $option['label'] ?? ($option['value'] ?? null),
+                            ];
+                        }
+
+                        return [
+                            'value' => $option,
+                            'label' => $option,
+                        ];
+                    })
+                    ->filter(fn (array $option): bool => filled($option['value']) || $option['value'] === 0 || $option['value'] === '0')
+                    ->values()
+                    ->all(),
             ];
         })
         ->filter(fn ($field) => filled($field['name']))
@@ -161,11 +178,11 @@
                                     ? $rawTemplate->toArray()
                                     : (is_array($rawTemplate) ? $rawTemplate : null);
 
-                                if ($templateArray && filled($templateArray['name'] ?? null)) {
-                                    $templatePopup = [
-                                        'title' => (string) ($templateArray['name'] ?? ''),
-                                        'description' => (string) ($templateArray['description'] ?? ''),
-                                        'fields' => $templatePopupFieldDefinitions
+                    if ($templateArray && filled($templateArray['name'] ?? null)) {
+                        $templatePopup = [
+                            'title' => (string) ($templateArray['name'] ?? ''),
+                            'description' => (string) ($templateArray['description'] ?? ''),
+                                    'fields' => $templatePopupFieldDefinitions
                                             ->map(function (array $field) use ($templateArray): array {
                                                 return [
                                                     'label' => $field['label'],
@@ -180,6 +197,8 @@
                                     }
                                 }
                             }
+
+                            $editAction = $itemData['edit_action'] ?? null;
                         @endphp
                         <tr
                             x-data="{ name: @js(Str::of($title)->lower()), visible: true }"
@@ -212,12 +231,18 @@
                                 @endif
                             </td>
                             @foreach ($columns as $column)
-                                @php
-                                    $align = $column['align'] ?? 'left';
-                                    $textClass = $align === 'right' ? 'text-right' : ($align === 'center' ? 'text-center' : 'text-left');
-                                @endphp
-                                <td class="px-3 py-2 align-top {{ $textClass }}">
-                                    {{ data_get($item, $column['key'] ?? '') }}
+                            @php
+                                $align = $column['align'] ?? 'left';
+                                $textClass = $align === 'right' ? 'text-right' : ($align === 'center' ? 'text-center' : 'text-left');
+                                $rawOutput = (bool) ($column['raw'] ?? false);
+                                $columnValue = data_get($item, $column['key'] ?? '');
+                            @endphp
+                            <td class="px-3 py-2 align-top {{ $textClass }}">
+                                    @if ($rawOutput)
+                                        {!! $columnValue !!}
+                                    @else
+                                        {{ $columnValue }}
+                                    @endif
                                 </td>
                             @endforeach
                             @if ($hasActions)
@@ -227,8 +252,11 @@
                                             <button
                                                 type="button"
                                                 class="text-xs text-slate-300 underline"
-                                                x-on:click="openEdit($el.dataset.editItem)"
+                                                x-on:click="openEdit($el.dataset.editItem, $el.dataset.editAction)"
                                                 data-edit-item='@json($itemData)'
+                                                @if ($editAction)
+                                                    data-edit-action="{{ $editAction }}"
+                                                @endif
                                             >Edit</button>
                                         @elseif ($editRoute)
                                             <a href="{{ route($editRoute, $item) }}" class="text-xs text-slate-300 underline">Edit</a>
@@ -303,6 +331,8 @@
                             }
                         }
                     }
+
+                    $editAction = $itemData['edit_action'] ?? null;
                 @endphp
                 <div class="flex items-center justify-between py-3"
                  x-data="{ name: @js(Str::of($title)->lower()), visible: true }"
@@ -350,8 +380,11 @@
                         <button
                             type="button"
                             class="text-xs text-slate-300 underline"
-                            x-on:click="openEdit($el.dataset.editItem)"
+                            x-on:click="openEdit($el.dataset.editItem, $el.dataset.editAction)"
                             data-edit-item='@json($itemData)'
+                            @if ($editAction)
+                                data-edit-action="{{ $editAction }}"
+                            @endif
                         >Edit</button>
                     @elseif ($editRoute)
                         <a href="{{ route($editRoute, $item) }}" class="text-xs text-slate-300 underline">Edit</a>
@@ -412,6 +445,7 @@
                                     ->map(fn ($value, $key) => sprintf('%s=\"%s\"', $key, e($value)))
                                     ->implode(' ');
                                 $fieldId = \Illuminate\Support\Str::slug($fieldName);
+                                $fieldOptions = collect(is_array($field['options']) ? $field['options'] : []);
                             @endphp
 
                             @if ($fieldType === 'hidden')
@@ -419,28 +453,69 @@
                                     type="hidden"
                                     name="{{ $fieldName }}"
                                     x-model="editForm.values['{{ $fieldName }}']"
-                                    {!! $fieldAttributes ? ' '.$fieldAttributes : '' !!}>
+                                    {!! $fieldAttributes ? ' '.$fieldAttributes : '' !!}
+                                >
+                            @elseif ($fieldType === 'select')
+                                <div class="space-y-1">
+                                    <label for="edit-{{ $fieldId }}" class="text-sm text-slate-300">{{ $fieldLabel }}</label>
+                                    <select
+                                        id="edit-{{ $fieldId }}"
+                                        name="{{ $fieldName }}"
+                                        class="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-emerald-400 focus:outline-none focus:ring-0"
+                                        x-model="editForm.values['{{ $fieldName }}']"
+                                        data-edit-input
+                                        {!! $fieldAttributes ? ' '.$fieldAttributes : '' !!}
+                                    >
+                                        @foreach ($fieldOptions as $option)
+                                            <option value="{{ $option['value'] }}">{{ $option['label'] }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @elseif ($fieldType === 'checkbox-group')
+                                <fieldset class="space-y-2">
+                                    <legend class="text-sm text-slate-300">{{ $fieldLabel }}</legend>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        @foreach ($fieldOptions as $option)
+                                            <label class="inline-flex items-center gap-2 rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-slate-200">
+                                                <input
+                                                    type="checkbox"
+                                                    name="{{ $fieldName }}[]"
+                                                    value="{{ $option['value'] }}"
+                                                    class="rounded border-slate-700 bg-slate-950 text-emerald-500 focus:ring-emerald-500"
+                                                    x-model="editForm.values['{{ $fieldName }}']"
+                                                    @if ($loop->first)
+                                                        data-edit-input
+                                                    @endif
+                                                >
+                                                <span>{{ $option['label'] }}</span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                </fieldset>
+                            @elseif ($fieldType === 'textarea')
+                                <div class="space-y-1">
+                                    <label for="edit-{{ $fieldId }}" class="text-sm text-slate-300">{{ $fieldLabel }}</label>
+                                    <textarea
+                                        id="edit-{{ $fieldId }}"
+                                        name="{{ $fieldName }}"
+                                        class="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-emerald-400 focus:outline-none focus:ring-0"
+                                        x-model="editForm.values['{{ $fieldName }}']"
+                                        data-edit-input
+                                        {!! $fieldAttributes ? ' '.$fieldAttributes : '' !!}
+                                    ></textarea>
+                                </div>
                             @else
                                 <div class="space-y-1">
                                     <label for="edit-{{ $fieldId }}" class="text-sm text-slate-300">{{ $fieldLabel }}</label>
-                                    @if ($fieldType === 'textarea')
-                                        <textarea
-                                            id="edit-{{ $fieldId }}"
-                                            name="{{ $fieldName }}"
-                                            class="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-emerald-400 focus:outline-none focus:ring-0"
-                                            x-model="editForm.values['{{ $fieldName }}']"
-                                            data-edit-input
-                                            {!! $fieldAttributes ? ' '.$fieldAttributes : '' !!}></textarea>
-                                    @else
-                                        <input
-                                            id="edit-{{ $fieldId }}"
-                                            type="{{ $fieldType }}"
-                                            name="{{ $fieldName }}"
-                                            class="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-emerald-400 focus:outline-none focus:ring-0"
-                                            x-model="editForm.values['{{ $fieldName }}']"
-                                            data-edit-input
-                                            {!! $fieldAttributes ? ' '.$fieldAttributes : '' !!}>
-                                    @endif
+                                    <input
+                                        id="edit-{{ $fieldId }}"
+                                        type="{{ $fieldType }}"
+                                        name="{{ $fieldName }}"
+                                        class="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-emerald-400 focus:outline-none focus:ring-0"
+                                        x-model="editForm.values['{{ $fieldName }}']"
+                                        data-edit-input
+                                        {!! $fieldAttributes ? ' '.$fieldAttributes : '' !!}
+                                    >
                                 </div>
                             @endif
                         @endforeach
@@ -472,6 +547,7 @@
             edit: editConfig,
             editForm: {
                 action: editConfig?.action ?? '',
+                defaultAction: editConfig?.action ?? '',
                 method: editConfig?.method ?? 'POST',
                 title: editConfig?.title ?? 'Edit Item',
                 submitLabel: editConfig?.submitLabel ?? 'Save',
@@ -527,7 +603,7 @@
                     // Ignore malformed template payloads
                 }
             },
-            openEdit(itemPayload) {
+            openEdit(itemPayload, action = null) {
                 if (!this.editForm.fields.length) {
                     return;
                 }
@@ -543,6 +619,7 @@
                 }
 
                 this.modalMode = 'edit';
+                this.editForm.action = action || this.editForm.defaultAction;
                 this.populateEditValues(parsedItem);
                 this.showModal();
 
@@ -588,8 +665,20 @@
                         }
                     }
 
-                    if (typeof value === 'number') {
+                    if (field.type === 'checkbox-group') {
+                        if (!Array.isArray(value)) {
+                            value = value === undefined || value === null || value === ''
+                                ? []
+                                : [value];
+                        }
+
+                        value = value
+                            .filter((entry) => entry !== undefined && entry !== null && entry !== '')
+                            .map((entry) => entry.toString());
+                    } else if (typeof value === 'number') {
                         value = value.toString();
+                    } else if (value === undefined || value === null) {
+                        value = '';
                     }
 
                     values[field.name] = value ?? '';
@@ -605,6 +694,7 @@
                 this.detail = { title: '', description: '', fields: [] };
                 this.editForm.values = {};
                 this.modalMode = 'detail';
+                this.editForm.action = this.editForm.defaultAction;
             },
             init() {
                 document.addEventListener('keydown', (event) => {
