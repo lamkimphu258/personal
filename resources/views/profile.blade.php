@@ -5,7 +5,7 @@
 @section('body-class', 'bg-slate-950 text-slate-100 min-h-screen')
 
 @section('content')
-    <div class="max-w-5xl mx-auto px-4 py-12 space-y-10">
+    <div class="mx-auto w-full max-w-6xl px-4 py-12 space-y-10">
         <header class="space-y-2">
             <h1 class="text-3xl font-semibold tracking-tight">Weight Loss Profile</h1>
             <p class="text-slate-400">Update your current stats so the app can calculate a safe calorie target and macro plan that emphasises protein and fibre.</p>

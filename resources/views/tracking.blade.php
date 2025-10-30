@@ -68,7 +68,7 @@
         ];
     @endphp
 
-    <div class="max-w-5xl mx-auto px-4 py-12 space-y-10">
+    <div class="mx-auto w-full max-w-6xl px-4 py-12 space-y-10">
         <header class="space-y-2">
             <h1 class="text-3xl font-semibold tracking-tight">Daily Tracking</h1>
             <p class="text-slate-400">Track today’s weight and food entries. Navigate days to view history.</p>
