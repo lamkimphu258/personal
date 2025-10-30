@@ -32,6 +32,13 @@
                 <a href="{{ url('/') }}" class="text-base font-semibold tracking-tight text-emerald-300 transition hover:text-emerald-200">
                     {{ config('app.name', 'Nutrition Companion') }}
                 </a>
+                @php
+                    $navigation[] = [
+                        'label' => 'Tracking',
+                        'href' => route('tracking.index'),
+                        'active' => request()->routeIs('tracking.*'),
+                    ];
+                @endphp
                 <nav class="flex items-center gap-1 text-sm font-medium">
                     @foreach ($navigation as $item)
                         <a
