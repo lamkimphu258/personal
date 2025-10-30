@@ -20,20 +20,6 @@ The system SHALL provide a Daily Tracking page scoped to a selected date with si
 ### Requirement: Progress Widget (Calories and Macros)
 The system SHALL show a progress widget for the selected date summarizing daily calories and macronutrients versus targets.
 
-## MODIFIED Requirements
-
-### Requirement: Progress Section Layout (Wider)
-The progress section SHOULD span the full content width above the forms and listings to maximise readability.
-
-#### Scenario: Full-width progress section on large screens
-- GIVEN I view the Daily Tracking page on a desktop or large screen
-- THEN the progress section stretches across the full main content width as a single wide block
-- AND the individual metric cards (calories, protein, carbs, fat) arrange in responsive columns within that block.
-
-#### Scenario: Mobile-friendly stacking
-- GIVEN I view the Daily Tracking page on a small screen
-- THEN the progress section remains at the top and its metric cards stack or wrap responsively without horizontal scrolling.
-
 #### Scenario: With profile targets available
 - GIVEN a Nutrition Profile with daily targets exists
 - WHEN the user views the selected date
@@ -46,6 +32,20 @@ The progress section SHOULD span the full content width above the forms and list
 - WHEN the user views the selected date
 - THEN the widget shows consumed totals only
 - AND shows guidance to set up a profile to enable targets
+
+## ADDED Requirements
+
+### Requirement: Progress Section Layout (Wider)
+The progress section SHALL span the full content width above the forms and listings to maximise readability.
+
+#### Scenario: Full-width progress section on large screens
+- GIVEN I view the Daily Tracking page on a desktop or large screen
+- THEN the progress section stretches across the full main content width as a single wide block
+- AND the individual metric cards (calories, protein, carbs, fat) arrange in responsive columns within that block.
+
+#### Scenario: Mobile-friendly stacking
+- GIVEN I view the Daily Tracking page on a small screen
+- THEN the progress section remains at the top and its metric cards stack or wrap responsively without horizontal scrolling.
 
 ### Requirement: Daily Weight Entry
 The system SHALL allow recording a single weight entry for the selected date.
