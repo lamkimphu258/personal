@@ -5,6 +5,7 @@ The system MUST store a single set of weight loss inputs and let me review/updat
 #### Scenario: View profile page
 - **GIVEN** I navigate to the profile page
 - **THEN** I see fields for age (years), sex (female or male), current weight (kg), goal weight (kg), height (cm), activity level, and desired weight loss per week (kg)
+- **AND** the weekly weight loss field presents preset options of 0.25 kg, 0.5 kg, 0.75 kg, and 1.0 kg so I can pick a safe rate.
 - **AND** each field is pre-filled with the last saved values or sensible defaults if nothing was saved.
 
 #### Scenario: Validate profile inputs
@@ -14,7 +15,7 @@ The system MUST store a single set of weight loss inputs and let me review/updat
   - current weight MUST be between 40 kg and 250 kg
   - goal weight MUST be between 35 kg and (current weight - 2 kg)
   - height MUST be between 120 cm and 210 cm
-  - desired weight loss per week MUST be between 0.25 kg and 1.0 kg
+  - desired weight loss per week MUST be one of 0.25 kg, 0.5 kg, 0.75 kg, or 1.0 kg
   - activity level MUST be one of sedentary, lightly-active, moderately-active, very-active, or athlete
 - **AND** the form redisplays with validation errors so I can correct the values.
 
