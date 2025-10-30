@@ -24,12 +24,22 @@ class TaskRequest extends FormRequest
     public function rules(): array
     {
         $repeatMode = $this->input('repeat_mode', Task::REPEAT_NONE);
+        $task = $this->route('task');
+
+        $dueDateRules = [
+            'required',
+            'date_format:Y-m-d',
+        ];
+
+        if (! $task) {
+            $dueDateRules[] = 'after_or_equal:context_date';
+        }
 
         return [
             'context_date' => ['required', 'date_format:Y-m-d'],
             'title' => ['required', 'string', 'max:120'],
             'priority' => ['required', Rule::in(Task::PRIORITIES)],
-            'due_date' => ['required', 'date_format:Y-m-d', 'after_or_equal:context_date'],
+            'due_date' => $dueDateRules,
             'repeat_mode' => ['required', Rule::in(Task::REPEAT_MODES)],
             'repeat_days' => collect([
                 Rule::requiredIf($repeatMode === Task::REPEAT_SELECTED),
