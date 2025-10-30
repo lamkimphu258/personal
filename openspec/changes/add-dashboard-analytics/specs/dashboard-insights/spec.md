@@ -16,7 +16,7 @@ The dashboard SHALL display weight summary widgets above the charts so current s
 - **AND** if no profile is saved the widget prompts me to complete the profile page instead of showing stale data.
 
 ### Requirement: Unified Date Filters
-The dashboard SHALL provide shared time-range controls that update every chart in sync.
+The dashboard SHALL provide shared time-range controls that update every line chart in sync.
 
 #### Scenario: Quick range presets
 - **WHEN** I click the Week, Month, or Year preset
@@ -28,37 +28,40 @@ The dashboard SHALL provide shared time-range controls that update every chart i
 - **THEN** each chart rerenders using only data within that inclusive range
 - **AND** the preset highlight clears while the custom range summary appears beside the filters.
 
-### Requirement: Weight Trend Visualisation
-The dashboard SHALL visualise weight changes over time using the global chart component.
+### Requirement: Weight Trend Line Chart
+The dashboard SHALL visualise weight changes over time using the reusable line chart component.
 
 #### Scenario: Plot daily weights
 - **GIVEN** weight entries exist within the selected range
-- **THEN** the chart renders a line graph with date labels on the X-axis and weight (kg) on the Y-axis using the shared chart component
+- **THEN** the chart renders a line graph with date labels on the X-axis and weight (kg) on the Y-axis using the reusable line chart component
 - **AND** missing days are omitted rather than zero-filled, preserving accurate trends.
+ - **AND** seed data provides at least three sample weight points across different dates so the chart can be validated visually during development.
 
 #### Scenario: Empty state messaging
 - **WHEN** no weight entries fall inside the selected window
 - **THEN** the chart area shows an empty-state message telling me to record weights on the Daily Tracking page.
 
-### Requirement: Calorie Goal Adherence Summary
-The dashboard SHALL surface how consistently calorie goals are met.
+### Requirement: Calorie Goal Adherence Line Chart
+The dashboard SHALL surface how consistently calorie goals are met using a line chart.
 
-#### Scenario: Show goal hit counts
+#### Scenario: Plot daily goal adherence
 - **WHEN** I view the dashboard for a given range
-- **THEN** the chart displays two values using the shared component: number of days where total calories were at or below target, and days exceeding target
-- **AND** totals come from food entries grouped by day and compared to the active calorie target for that date.
+- **THEN** the line chart plots each day with a value of `1` when total calories were at or below target and `0` when the target was exceeded, using the reusable line chart component
+- **AND** the dataset comes from food entries grouped by day and compared to the active calorie target for that date.
+ - **AND** seed data includes at least five days of food entries with varying totals to demonstrate both success (`1`) and failure (`0`) values on the chart.
 
 #### Scenario: Handle missing calorie target
 - **WHEN** no calorie target is available for the period (e.g., no nutrition profile saved)
 - **THEN** the section explains that calorie goals require completing the profile and does not render misleading data.
 
-### Requirement: Top Foods Frequency
-The dashboard SHALL highlight the most frequently consumed foods in the selected period.
+### Requirement: Top Foods Bar Chart
+The dashboard SHALL highlight the most frequently consumed foods in the selected period using a bar chart variant of the shared component.
 
-#### Scenario: Display top 10 foods
+#### Scenario: Display top 10 foods as bars
 - **WHEN** there are food entries in the range
-- **THEN** the chart lists the ten foods with the highest entry counts sorted descending, rendered via the shared component as a horizontal bar chart showing servings per food
+- **THEN** the chart renders the ten foods with the highest entry counts sorted descending, using a horizontal bar chart with food names as labels and servings per food on the axis
 - **AND** entries linked to templates use the stored entry name so manual edits still reflect accurately.
+ - **AND** seed data supplies at least ten distinct food names with varying frequencies so the chart ordering can be inspected visually.
 
 #### Scenario: Empty state without food entries
 - **WHEN** no food entries exist within the range

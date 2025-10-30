@@ -1,13 +1,13 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FoodTemplateController;
 use App\Http\Controllers\NutritionProfileController;
 use App\Http\Controllers\TrackingController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('dashboard');
-})->name('dashboard');
+Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+Route::get('/dashboard/data', [DashboardController::class, 'data'])->name('dashboard.data');
 
 Route::get('/profile', [NutritionProfileController::class, 'edit'])->name('profile.edit');
 Route::post('/profile', [NutritionProfileController::class, 'update'])->name('profile.update');
