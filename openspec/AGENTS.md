@@ -78,6 +78,10 @@ After deployment, create separate PR to:
 - Use `openspec show [spec]` to review current state
 - If request is ambiguous, ask 1–2 clarifying questions before scaffolding
 
+### Global UX Standards (Defaults)
+- Prefer the Global Listing Component (see change: add-global-listing-component and capability: ui-listing-component) when rendering listings. This SHOULD be the default unless the spec explicitly requests a different pattern.
+- By default, listings SHOULD include name search (case-insensitive), inline detail popup, and edit/delete actions with delete confirmation. Diverge only when the page spec directs otherwise.
+
 ### Search Guidance
 - Enumerate specs: `openspec spec list --long` (or `--json` for scripts)
 - Enumerate changes: `openspec list` (or `openspec change list --json` - deprecated but available)
