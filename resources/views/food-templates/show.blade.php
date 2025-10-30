@@ -3,7 +3,7 @@
 @section('title', $template->name . ' | Food Templates | ' . config('app.name', 'Nutrition Companion'))
 
 @section('content')
-    <div class="mx-auto max-w-3xl px-4 py-12">
+    <div class="mx-auto w-full max-w-6xl px-4 py-12">
         <a href="{{ route('food-templates.index') }}" class="text-sm text-emerald-300 hover:underline">&larr; Back to templates</a>
 
         <div class="mt-6 space-y-6 rounded-xl border border-slate-800 bg-slate-900/70 p-6">

@@ -23,7 +23,7 @@
             : 'No templates created yet.';
     @endphp
 
-    <div class="mx-auto flex max-w-5xl flex-col gap-10 px-4 py-12">
+    <div class="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-12">
         <header class="space-y-2">
             <h1 class="text-3xl font-semibold tracking-tight">Food Templates</h1>
             <p class="text-slate-400">Create reusable templates for meals and reuse them when logging foods.</p>
