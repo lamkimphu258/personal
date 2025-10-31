@@ -41,17 +41,17 @@
                             'bg-slate-700/60 text-slate-200' => $current['direction'] === 'flat',
                         ])>
                             @if ($current['direction'] === 'down')
-                                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fill-rule="evenodd" d="M3 5a1 1 0 1 1 2 0v6.586l3.293-3.293a1 1 0 0 1 1.414 0L13 12.586V6a1 1 0 1 1 2 0v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5Z" clip-rule="evenodd" />
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
                                 </svg>
                                 <span>Weight down</span>
                             @elseif ($current['direction'] === 'up')
-                                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fill-rule="evenodd" d="M17 15a1 1 0 1 1-2 0V8.414l-3.293 3.293a1 1 0 0 1-1.414 0L7 7.414V14a1 1 0 1 1-2 0V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v10Z" clip-rule="evenodd" />
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                                 </svg>
                                 <span>Weight up</span>
                             @else
-                                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                                     <path d="M4 10a1 1 0 0 1 1-1h10a1 1 0 1 1 0 2H5a1 1 0 0 1-1-1Z" />
                                 </svg>
                                 <span>{{ $current['hasComparison'] ? 'No change' : 'No previous data' }}</span>
