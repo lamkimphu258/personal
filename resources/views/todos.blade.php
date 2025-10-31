@@ -337,8 +337,15 @@
                     this.isProcessing = true;
 
                     try {
+                        const statusElement = document.getElementById(`status-${payload.id}`);
+                        let currentCompleted = payload.completed;
+
+                        if (statusElement) {
+                            currentCompleted = statusElement.textContent.trim() === 'Completed';
+                        }
+
                         const response = await axios.patch(payload.url, {
-                            completed: !payload.completed,
+                            completed: !currentCompleted,
                         });
 
                         if (response?.data?.summary) {

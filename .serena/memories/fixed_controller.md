@@ -69,6 +69,7 @@ class TodoController extends Controller
                 'url' => route('todos.occurrences.toggle', $occurrence),
                 'completed' => $occurrence->is_completed,
             ], JSON_UNESCAPED_SLASHES);
+            $toggleButtonLabel = $occurrence->is_completed ? 'Mark incomplete' : 'Mark complete';
             $statusDisplay = sprintf(
                 '<div class="flex items-center gap-2" x-data="{ completed: %s }" x-on:todo-occurrence-updated.window="if ($event.detail.id === %d) { completed = $event.detail.completed; }">
                     <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium border transition" :class="completed ? \'border-emerald-500/40 bg-emerald-500/15 text-emerald-200\' : \'border-slate-700/60 bg-slate-800/80 text-slate-200\'" x-text="completed ? \'Completed\' : \'Incomplete\'" id="status-%s"></span>
