@@ -104,7 +104,7 @@
     <div
         class="mx-auto w-full max-w-6xl px-4 py-10 lg:px-6"
         x-data="todoPage({
-            summary: @json($summary),
+            summary: {{ json_encode($summary ?? ['total' => 0, 'completed' => 0, 'incomplete' => 0]) }},
             contextDate: '{{ $selectedDate }}'
         })"
     >
@@ -144,7 +144,7 @@
             </div>
         </div>
 
-        <div class="mt-8 grid gap-4 sm:grid-cols-3" x-data>
+        <div class="mt-8 grid gap-4 sm:grid-cols-3">
             <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 shadow-lg shadow-slate-950/20">
                 <dt class="text-sm font-medium text-slate-400">Total Tasks</dt>
                 <dd class="mt-3 text-3xl font-semibold tracking-tight text-slate-50" x-text="summary.total"></dd>
